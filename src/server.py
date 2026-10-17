@@ -114,7 +114,8 @@ def run_options() -> dict:
     """Streamable HTTP options. Defaults: 127.0.0.1:8000/mcp, stateless, JSON responses."""
     options: dict = {
         "host": os.environ.get("MCP_HOST", "127.0.0.1"),
-        "port": int(os.environ.get("MCP_PORT", "8000")),
+        # PORT is the convention hosting platforms (Render, Cloud Run, Heroku) use to assign a port.
+        "port": int(os.environ.get("MCP_PORT") or os.environ.get("PORT") or "8000"),
         "streamable_http_path": "/mcp",
         "stateless_http": True,
         "json_response": True,

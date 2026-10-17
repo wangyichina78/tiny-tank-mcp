@@ -1,0 +1,14 @@
+# Render Blueprint: New > Blueprint > pick this repo. Free plan, built from the Dockerfile.
+services:
+  - type: web
+    name: tiny-tank-mcp
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    envVars:
+      # Render asks for these at setup (sync: false). Use the service's own hostname,
+      # e.g. tiny-tank-mcp.onrender.com and https://tiny-tank-mcp.onrender.com
+      - key: MCP_ALLOWED_HOSTS
+        sync: false
+      - key: MCP_ALLOWED_ORIGINS
+        sync: false

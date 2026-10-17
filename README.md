@@ -46,7 +46,7 @@ python tools/smoke_test.py --out evidence/direct.json
 | Variable | Default | Purpose |
 |---|---|---|
 | `MCP_HOST` | `127.0.0.1` | Bind interface (`0.0.0.0` in the container) |
-| `MCP_PORT` | `8000` | Listen port |
+| `MCP_PORT` | `$PORT`, else `8000` | Listen port. Hosting platforms that set `PORT` work unchanged |
 | `MCP_ALLOWED_HOSTS` | empty | Comma-separated Host header allowlist |
 | `MCP_ALLOWED_ORIGINS` | empty | Comma-separated Origin allowlist |
 
