@@ -34,6 +34,13 @@ SECURITY_DECLARATION = {
     "verified_by": "SEC-01..SEC-05",
 }
 
+# Explicit, not taken from the docstring: docstring indentation handling differs between Python
+# versions, which would change the tool definition an agent sees (and the SEC-01 manifest hash).
+TOOL_DESCRIPTION = (
+    "Return status and site for a tank by its ID (format TK-###, for example TK-102). "
+    "Read-only lookup against a synthetic POC dataset. result_code is OK, NOT_FOUND, or INVALID_INPUT."
+)
+
 TOOL_ANNOTATIONS = ToolAnnotations(
     title="Get tank status (synthetic POC data)",
     read_only_hint=True,
@@ -77,12 +84,13 @@ def _log_call(call_id: str, tank_id: str, result_code: str, started: float) -> N
     )
 
 
-@mcp.tool(annotations=TOOL_ANNOTATIONS, meta={SECURITY_META_KEY: SECURITY_DECLARATION})
+@mcp.tool(
+    description=TOOL_DESCRIPTION,
+    annotations=TOOL_ANNOTATIONS,
+    meta={SECURITY_META_KEY: SECURITY_DECLARATION},
+)
 def get_tank_status(tank_id: str) -> TankStatus:
-    """Return status and site for a tank by its ID (format TK-###, for example TK-102).
-
-    Read-only lookup against a synthetic POC dataset. result_code is OK, NOT_FOUND, or INVALID_INPUT.
-    """
+    """See TOOL_DESCRIPTION; that string is what agents see."""
     call_id = uuid.uuid4().hex
     started = time.perf_counter()
     result_code = "ERROR"
