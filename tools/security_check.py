@@ -137,7 +137,15 @@ def run(url: str, timeout: float, log_file: str | None, pin: bool) -> dict:
 
     # SEC-02 indirect prompt injection via output
     for attack in ADVERSARIAL_INPUTS:
-        r = call(attack)
+        try:
+            r = call(attack)
+        except TransportError as e:
+            # A well-formed tools/call never gets a 4xx from this server, so a 4xx here means a WAF or
+            # gateway in front refused the request: the text never reached the tool and cannot be reflected.
+            if not re.match(r"HTTP 4\d\d ", str(e)):
+                raise
+            check("SEC-02", f"adversarial input {attack[:28]!r}", True, f"refused before server ({str(e)[:8]})")
+            continue
         data = r.get("structuredContent") or {}
         text = "".join(c.get("text", "") for c in r.get("content", []))
         problems = []
