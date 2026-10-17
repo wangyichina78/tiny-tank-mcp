@@ -16,6 +16,8 @@
 3. When it asks for the two variables, enter the service hostname. If the name `tiny-tank-mcp` is taken, Render adds a suffix, so check the URL it shows.
    - `MCP_ALLOWED_HOSTS` = `tiny-tank-mcp.onrender.com`
    - `MCP_ALLOWED_ORIGINS` = `https://tiny-tank-mcp.onrender.com`
+
+   Some agent clients send an `Origin` header with their own domain. Any origin not on this list gets HTTP 403, and the client typically reports only that the connector could not be added. Add each client's origin, comma-separated. For example, claude.ai needs `https://claude.ai`. For Copilot Studio, check its requests in the Render logs (a 403 on `POST /mcp`) and add the origin it sends. Do not use `*`: the Origin check is the DNS-rebinding defence (SEC-04).
 4. Wait for the first deploy. This is also the first real build of the Dockerfile.
 5. Verify from your machine:
    ```bash
