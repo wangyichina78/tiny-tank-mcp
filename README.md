@@ -39,7 +39,7 @@ docs/agent_eval.md        agent behaviour eval and how to repeat it in Copilot S
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-python -m pytest -v                 # 41 tests (15 functional + 17 security + 9 agent-eval scoring)
+python -m pytest -v                 # 42 tests (15 functional + 17 security + 10 agent-eval scoring)
 python -m src.server                # http://127.0.0.1:8000/mcp
 python tools/smoke_test.py --out evidence/direct.json
 ```

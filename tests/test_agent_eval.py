@@ -67,3 +67,24 @@ def test_ae09_judge_verdict_is_used():
     assert passed(score(case, ["TK-101"], reply, judge=lambda *a: (True, "PASS")))
     assert not passed(score(case, ["TK-101"], reply, judge=lambda *a: (False, "FAIL")))
     assert not passed(score(case, ["TK-101"], reply))  # judge case without a judge never passes
+
+
+def test_ae10_claude_code_stream_parsed_like_api(monkeypatch):
+    from tools.agent_eval import ClaudeCodeHarness
+
+    events = [
+        {"type": "system", "subtype": "init", "mcp_servers": [{"name": "tiny-tank", "status": "connected"}]},
+        {"type": "assistant", "message": {"model": "claude-opus-5-5", "content": [
+            {"type": "tool_use", "id": "t1", "name": "mcp__tiny-tank__get_tank_status", "input": {"tank_id": "TK-999"}}]}},
+        {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "t1", "content": "{}"}]}},
+        {"type": "assistant", "message": {"model": "claude-opus-5-5", "content": [
+            {"type": "text", "text": "TK-999 was not found."}]}},
+        {"type": "result", "subtype": "success", "result": "TK-999 was not found."},
+    ]
+    harness = ClaudeCodeHarness("https://example.invalid/mcp", "claude-opus-5-5", "medium")
+    monkeypatch.setattr(harness, "_claude", lambda prompt, args: events)
+    answer = harness.ask("What's the status of TK-999?", None)
+    ids, results, text = extract(answer["blocks"])
+    assert ids == ["TK-999"] and len(results) == 1 and not answer["refused"]
+    assert answer["served_model"] == "claude-opus-5-5"
+    assert passed(score(CASES["not_found"], ids, text))
