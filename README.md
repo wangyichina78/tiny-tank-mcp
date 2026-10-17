@@ -23,11 +23,14 @@ tests/                    unit, in-process MCP protocol, and security (SEC-01..0
 tools/smoke_test.py       stdlib client for a live endpoint; writes JSON evidence
 tools/compare_routes.py   direct vs gateway evidence parity check (GT-05)
 tools/security_check.py   black-box SEC-01..05 against a live endpoint
+tools/agent_eval.py       Claude baseline of agent behaviour against a live endpoint
+tools/agent_eval_cases.json  agent-behaviour cases, reusable in Copilot Studio
 security/tool_manifest.sha256  pinned hash of the tool definition (SEC-01)
 SECURITY.md               security declaration
 docs/security_test_cadence.md  the five security cases and when to run them
 docs/deployment.md        hosting and connecting an agent
 docs/build_report.md      verification results
+docs/agent_eval.md        agent behaviour eval and how to repeat it in Copilot Studio
 .github/workflows/ci.yml  tests + live black-box security check on every push
 ```
 
@@ -36,7 +39,7 @@ docs/build_report.md      verification results
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-python -m pytest -v                 # 32 tests (15 functional + 17 security)
+python -m pytest -v                 # 41 tests (15 functional + 17 security + 9 agent-eval scoring)
 python -m src.server                # http://127.0.0.1:8000/mcp
 python tools/smoke_test.py --out evidence/direct.json
 ```
@@ -75,6 +78,8 @@ claude mcp add --transport http tiny-tank https://<host>/mcp
 ```
 
 For Copilot Studio, add an MCP tool with the Streamable HTTP transport and no authentication. If the agent belongs to an organization, get that organization's approval before connecting it to an external endpoint.
+
+To check how an agent behaves with the tool, not just that the tool responds, see `docs/agent_eval.md`.
 
 ## License
 

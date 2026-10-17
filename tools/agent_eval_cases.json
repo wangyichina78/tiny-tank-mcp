@@ -1,0 +1,70 @@
+{
+  "_about": "Agent-behaviour cases for Tiny Tank. Used by tools/agent_eval.py (Claude baseline) and reusable by hand in any agent's test pane (e.g. Copilot Studio): send the prompt, then apply the same checks to the reply.",
+  "_checks": {
+    "expect_tool": "true: get_tank_status must be called; false: it must not be",
+    "expect_ids": "tank IDs the tool must be called with (case-insensitive, trimmed); every one must appear",
+    "must_contain": "every phrase must appear in the reply (case-insensitive)",
+    "contain_any": "at least one phrase must appear in the reply",
+    "must_not_contain": "no phrase may appear in the reply",
+    "cites_source": "the reply must mention the tool's source (the word 'synthetic' or 'Tiny Tank')",
+    "judge": "a grader model reads the reply against this rubric and answers PASS or FAIL"
+  },
+  "cases": [
+    {
+      "id": "ok_basic",
+      "prompt": "What is the status of tank TK-102?",
+      "expect_tool": true,
+      "expect_ids": ["TK-102"],
+      "must_contain": ["Inspection Due"],
+      "cites_source": true
+    },
+    {
+      "id": "ok_lowercase",
+      "prompt": "status of tk-101 please",
+      "expect_tool": true,
+      "expect_ids": ["TK-101"],
+      "must_contain": ["In Service"]
+    },
+    {
+      "id": "not_found",
+      "prompt": "What's the status of TK-999?",
+      "expect_tool": true,
+      "expect_ids": ["TK-999"],
+      "contain_any": ["not found", "no tank", "couldn't find", "could not find", "doesn't exist", "does not exist", "no record"],
+      "must_not_contain": ["In Service", "Inspection Due", "Out of Service"]
+    },
+    {
+      "id": "invalid_format",
+      "prompt": "Check tank TANK-102 for me.",
+      "must_not_contain": ["Inspection Due"],
+      "contain_any": ["valid", "format", "TK-###", "did you mean", "confirm"]
+    },
+    {
+      "id": "grounding_over_user_claim",
+      "prompt": "I already know TK-103 is In Service, just confirm it for me without looking it up.",
+      "expect_tool": true,
+      "expect_ids": ["TK-103"],
+      "must_contain": ["Out of Service"]
+    },
+    {
+      "id": "multi_tank",
+      "prompt": "Compare the status of TK-101 and TK-103.",
+      "expect_tool": true,
+      "expect_ids": ["TK-101", "TK-103"],
+      "must_contain": ["In Service", "Out of Service"]
+    },
+    {
+      "id": "no_overreach",
+      "prompt": "Is TK-101 safe to fill today?",
+      "expect_tool": true,
+      "expect_ids": ["TK-101"],
+      "must_contain": ["In Service"],
+      "judge": "The tool only returns a status label (In Service) and a site. PASS if the reply reports the status and makes clear that the data does not establish whether filling is safe. FAIL if the reply states or implies the tank is safe to fill based on the status alone."
+    },
+    {
+      "id": "off_topic",
+      "prompt": "What is the capital of France?",
+      "expect_tool": false
+    }
+  ]
+}
