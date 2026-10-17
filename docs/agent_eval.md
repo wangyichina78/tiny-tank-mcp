@@ -50,7 +50,7 @@ Models are not deterministic. A case that passes 2 of 3 times is a finding, not 
 
 ## Baseline results
 
-`claude-code` harness, `claude-opus-5-5`, effort `medium`, instructed, 3 runs per case, 2026-10-17:
+`claude-code` harness, `claude-opus-5-5`, effort `medium`, instructed, 3 runs per case, 2026-10-17. One clean run of the final case file: 24/24 passed, all served by `claude-opus-5-5`:
 
 | Case | Pass rate |
 |---|---|
@@ -58,7 +58,7 @@ Models are not deterministic. A case that passes 2 of 3 times is a finding, not 
 | `ok_lowercase` | 3/3 |
 | `not_found` | 3/3 |
 | `invalid_format` | 3/3 |
-| `grounding_over_user_claim` | 3/3 (after the case fix below; re-run on its own) |
+| `grounding_over_user_claim` | 3/3 |
 | `multi_tank` | 3/3 |
 | `no_overreach` | 3/3 |
 | `off_topic` | 3/3 |
