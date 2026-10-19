@@ -21,14 +21,26 @@ from datetime import datetime, timezone
 
 CLIENT_PROTOCOL = "2025-06-18"
 
-EXPECTED = [
-    ("TK-101", "OK", "In Service", "Site A"),
-    ("TK-102", "OK", "Inspection Due", "Site A"),
-    ("TK-103", "OK", "Out of Service", "Site A"),
-    ("TK-999", "NOT_FOUND", None, None),
-    ("TANK-102", "INVALID_INPUT", None, None),
-    ("tk-102", "OK", "Inspection Due", "Site A"),
-    ("", "INVALID_INPUT", None, None),
+EXPECTED_TOOLS = ["get_inspection_history", "get_tank_readings", "get_tank_status", "list_tanks"]
+
+# (tool, arguments, expected result fields). Includes the two planted inconsistencies (TK-105, TK-107).
+EXPECTED_CALLS = [
+    ("get_tank_status", {"tank_id": "TK-101"}, {"result_code": "OK", "status": "In Service", "site": "Site A"}),
+    ("get_tank_status", {"tank_id": "TK-102"}, {"result_code": "OK", "status": "Inspection Due", "site": "Site A"}),
+    ("get_tank_status", {"tank_id": "TK-103"}, {"result_code": "OK", "status": "Out of Service", "site": "Site A"}),
+    ("get_tank_status", {"tank_id": "TK-105"}, {"result_code": "OK", "status": "In Service", "site": "Site B"}),
+    ("get_tank_status", {"tank_id": "TK-999"}, {"result_code": "NOT_FOUND", "status": None, "site": None}),
+    ("get_tank_status", {"tank_id": "TANK-102"}, {"result_code": "INVALID_INPUT", "status": None, "site": None}),
+    ("get_tank_status", {"tank_id": "tk-102"}, {"result_code": "OK", "status": "Inspection Due", "site": "Site A"}),
+    ("get_tank_status", {"tank_id": ""}, {"result_code": "INVALID_INPUT", "status": None, "site": None}),
+    ("list_tanks", {}, {"result_code": "OK", "count": 8}),
+    ("list_tanks", {"site": "Site B"}, {"result_code": "OK", "count": 4, "site": "Site B"}),
+    ("list_tanks", {"site": "Site Z"}, {"result_code": "INVALID_INPUT", "count": 0}),
+    ("get_inspection_history", {"tank_id": "TK-105"}, {"result_code": "OK", "next_due": "2026-09-30", "as_of": "2026-10-16"}),
+    ("get_inspection_history", {"tank_id": "TK-107"}, {"result_code": "OK", "next_due": None}),
+    ("get_tank_readings", {"tank_id": "TK-105", "days": 3}, {"result_code": "OK", "days": 3, "high_alarm_pct": 90.0}),
+    ("get_tank_readings", {"tank_id": "TK-107"}, {"result_code": "OK", "days": 7}),
+    ("get_tank_readings", {"tank_id": "TK-105", "days": 0}, {"result_code": "INVALID_INPUT"}),
 ]
 
 
@@ -129,26 +141,18 @@ def run(url: str, timeout: float) -> dict:
     check("initialize", "capabilities" in init, f"protocol {s.protocol}")
 
     tools = s.request("tools/list", {}).get("tools", [])
-    names = [t["name"] for t in tools]
-    props = tools[0].get("inputSchema", {}).get("properties", {}) if tools else {}
-    check(
-        "tools/list exposes get_tank_status with one string input tank_id",
-        names == ["get_tank_status"] and list(props) == ["tank_id"] and props["tank_id"].get("type") == "string",
-        f"tools={names}",
-    )
+    names = sorted(t["name"] for t in tools)
+    check("tools/list exposes the four read-only tools", names == EXPECTED_TOOLS, f"tools={names}")
 
-    for tank_id, code, status, site in EXPECTED:
-        result = s.request("tools/call", {"name": "get_tank_status", "arguments": {"tank_id": tank_id}})
+    for tool, arguments, expected in EXPECTED_CALLS:
+        result = s.request("tools/call", {"name": tool, "arguments": arguments})
         data = result.get("structuredContent")
         if data is None and result.get("content"):
             data = json.loads(result["content"][0]["text"])
-        evidence["calls"].append({"input": tank_id, "is_error": result.get("isError", False), "result": data})
-        ok = (
-            not result.get("isError")
-            and data is not None
-            and (data.get("result_code"), data.get("status"), data.get("site")) == (code, status, site)
-        )
-        check(f"get_tank_status({tank_id!r}) -> {code}", ok, f"got {data and data.get('result_code')}")
+        evidence["calls"].append({"tool": tool, "input": arguments, "is_error": result.get("isError", False), "result": data})
+        got = {k: (data or {}).get(k) for k in expected}
+        ok = not result.get("isError") and got == expected
+        check(f"{tool}({json.dumps(arguments)}) -> {expected['result_code']}", ok, "" if ok else f"got {got}")
 
     evidence["all_pass"] = all(c["pass"] for c in evidence["checks"])
     return evidence

@@ -1,12 +1,12 @@
 # Security Declaration: Tiny Tank MCP
 
-Declaration version 1.0. Applies to the tool definition pinned in `security/tool_manifest.sha256`.
+Declaration version 1.0. Applies to all four tool definitions, pinned together in `security/tool_manifest.sha256`.
 
 ## What the server declares
 
 The server sends this declaration twice, both times in machine-readable form:
 
-- **At discovery:** in the tool definition, before any call (`tools/list` → `tools[0]._meta["tinytank/security-declaration"]`).
+- **At discovery:** in every tool definition, before any call (`tools/list` → `tools[i]._meta["tinytank/security-declaration"]`).
 - **On every call:** in the result (`tools/call` → `result._meta["tinytank/security-declaration"]`).
 
 The declaration sits in `_meta`, not in the text the model reads. That way it cannot become a channel for instructions.
@@ -19,17 +19,17 @@ The declaration sits in `_meta`, not in the text the model reads. That way it ca
 | `filesystem_access` | false | No file I/O in the tool path | SEC-03 (no `open` audit events) |
 | `code_execution` | false | No eval, exec or subprocess | SEC-03 |
 | `data_classification` | synthetic-test-data | Three hard-coded made-up records | Code review |
-| `reflects_caller_input` | false | Rejected input is never echoed; only validated `TK-###` IDs return | SEC-02 |
+| `reflects_caller_input` | false | Rejected input is never echoed; only validated `TK-###` IDs and known site names return. Argument-validation errors and unknown tool names are rewritten to name only the field (`TinyTankServer.call_tool`) | SEC-02 |
 | `instructions_in_output` | false | Output text is server-authored and fixed | SEC-02 |
-| `authentication` | none (public test endpoint, synthetic data only) | Synthetic data only, read-only tool; host rate limiting | SEC-04 (HTTPS on hosted URL) |
+| `authentication` | none (public test endpoint, synthetic data only) | Synthetic data only, read-only tools; host rate limiting | SEC-04 (HTTPS on hosted URL) |
 
-The server also sets the standard MCP tool annotations: `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `openWorldHint: false`.
+Every tool also sets the standard MCP tool annotations: `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `openWorldHint: false`.
 
 ## How a calling agent should treat this
 
 The MCP specification says tool annotations are **untrusted hints** unless they come from a trusted server. A malicious server could send the same declaration. The declaration has value only together with three things:
 
-1. **Pinned manifest.** The live tool definition hash matches `security/tool_manifest.sha256` (SEC-01). If it doesn't match, the definition changed after review. Do not connect.
+1. **Pinned manifest.** The live hash of all tool definitions matches `security/tool_manifest.sha256` (SEC-01). If it doesn't match, the definition changed after review. Do not connect.
 2. **Current evidence.** An independent SEC-01..05 run on the deployed URL is no older than the cadence in `docs/security_test_cadence.md` allows.
 3. **Platform controls.** The hosting platform keeps the network controls in place: ingress allowlist, egress deny, TLS.
 

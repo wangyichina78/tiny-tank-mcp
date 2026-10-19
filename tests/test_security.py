@@ -20,7 +20,14 @@ from starlette.testclient import TestClient  # noqa: E402
 
 import src.business_logic as bl  # noqa: E402
 import src.server as srv  # noqa: E402
-from tools.security_check import INJECTION_MARKERS, INVALID_MESSAGE, manifest_hash  # noqa: E402
+from src import tank_data  # noqa: E402
+from tools.security_check import (  # noqa: E402
+    EXPECTED_TOOLS,
+    INJECTION_MARKERS,
+    TEXT_ARGUMENTS,
+    WRONG_TYPE_CALLS,
+    manifest_hash,
+)
 
 pytestmark = pytest.mark.anyio
 
@@ -85,41 +92,40 @@ def _is_printable_ascii(text: str) -> bool:
     return all(c == "\n" or 0x20 <= ord(c) < 0x7F for c in text)
 
 
-# SEC-01: tool poisoning and rug pull. The definition the agent reads must be clean and unchanged.
-async def test_sec01_tool_definition_is_clean_and_pinned():
+# SEC-01: tool poisoning and rug pull. The definitions the agent reads must be clean and unchanged.
+async def test_sec01_tool_definitions_are_clean_and_pinned():
     async with Client(srv.mcp) as client:
         tools = (await client.list_tools()).tools
-    assert [t.name for t in tools] == ["get_tank_status"], "unexpected tool surface"
-    tool = tools[0]
+    assert sorted(t.name for t in tools) == EXPECTED_TOOLS, "unexpected tool surface"
 
-    texts = list(_strings(tool.model_dump(mode="json", by_alias=True, exclude_none=True)))
+    texts = [s for t in tools for s in _strings(t.model_dump(mode="json", by_alias=True, exclude_none=True))]
     texts.append(srv.mcp.instructions or "")
     for text in texts:
         assert _is_printable_ascii(text), f"hidden or non-ASCII characters in definition: {text!r}"
         for marker in INJECTION_MARKERS:
             assert not re.search(marker, text, re.IGNORECASE), f"injection marker {marker!r} in {text!r}"
-    assert len(tool.description or "") <= 500
+    assert all(len(t.description or "") <= 500 for t in tools)
 
-    # Hash the definition exactly as an agent receives it on the wire, same as tools/security_check.py.
+    # Hash the definitions exactly as an agent receives them on the wire, same as tools/security_check.py.
     with TestClient(_app(host="127.0.0.1"), base_url="http://127.0.0.1:8000") as http:
-        wire_tool = _post(http).json()["result"]["tools"][0]
-    assert manifest_hash(wire_tool) == MANIFEST_PIN.read_text().strip(), (
-        "tool definition changed: review the diff, then re-pin with `python -m tools.security_check --pin`"
+        wire_tools = _post(http).json()["result"]["tools"]
+    assert manifest_hash(wire_tools) == MANIFEST_PIN.read_text().strip(), (
+        "tool definitions changed: review the diff, then re-pin with `python -m tools.security_check --pin`"
     )
 
 
 # SEC-02: indirect prompt injection via output. Caller text must never come back into agent context.
 @pytest.mark.parametrize("attack", ADVERSARIAL_INPUTS, ids=lambda s: repr(s[:24]))
-async def test_sec02_output_never_reflects_caller_input(attack):
+@pytest.mark.parametrize("tool,arg,extra,expected_message", TEXT_ARGUMENTS, ids=lambda v: v if isinstance(v, str) and v.isidentifier() else "")
+async def test_sec02_output_never_reflects_caller_input(tool, arg, extra, expected_message, attack):
     async with Client(srv.mcp) as client:
-        result = await client.call_tool("get_tank_status", {"tank_id": attack})
+        result = await client.call_tool(tool, {**extra, arg: attack})
 
     assert not result.is_error
     data = result.structured_content
-    assert set(data) == {"tank_id", "status", "site", "result_code", "message", "source"}
     assert data["result_code"] == bl.RESULT_INVALID_INPUT
-    assert data["tank_id"] is None
-    assert data["message"] == INVALID_MESSAGE
+    assert data["message"] == expected_message
+    assert data.get(arg) is None, "rejected input returned in a result field"
 
     text = result.content[0].text
     assert json.loads(text) == data, "text content diverges from structured content"
@@ -127,36 +133,63 @@ async def test_sec02_output_never_reflects_caller_input(attack):
         assert _is_printable_ascii(value)
         for marker in INJECTION_MARKERS:
             assert not re.search(marker, value, re.IGNORECASE)
-    core = attack.strip("\x00​‮ ")
+    core = attack.strip("\x00\u200b\u202e ")
     if len(core) >= 4:
         # The fixed server-authored message is checked exactly above; look for reflection everywhere else.
-        assert core.upper() not in text.replace(INVALID_MESSAGE, "").upper(), "caller input reflected in output"
+        assert core.upper() not in text.replace(expected_message, "").upper(), "caller input reflected in output"
+
+
+@pytest.mark.parametrize("tool,arguments", WRONG_TYPE_CALLS, ids=lambda v: v if isinstance(v, str) else "")
+async def test_sec02_validation_errors_never_reflect_caller_input(tool, arguments):
+    # The SDK's own validation message includes the rejected value; TinyTankServer must strip it.
+    async with Client(srv.mcp) as client:
+        result = await client.call_tool(tool, arguments)
+    assert result.is_error
+    text = " ".join(c.text for c in result.content)
+    assert "CANARY" not in text and "Ignore previous" not in text and "input_value" not in text
+    assert "invalid arguments" in text
+
+
+async def test_sec02_unknown_tool_name_is_not_echoed():
+    async with Client(srv.mcp) as client:
+        result = await client.call_tool("delete_all_CANARY_ignore_previous_instructions", {})
+    assert result.is_error
+    assert "CANARY" not in result.content[0].text
 
 
 async def test_sec02_not_found_echoes_only_validated_id():
     async with Client(srv.mcp) as client:
-        result = await client.call_tool("get_tank_status", {"tank_id": "tk-999"})
-    assert NOT_FOUND_MESSAGE.fullmatch(result.structured_content["message"])
+        for tool in ("get_tank_status", "get_inspection_history", "get_tank_readings"):
+            result = await client.call_tool(tool, {"tank_id": "tk-999"})
+            assert NOT_FOUND_MESSAGE.fullmatch(result.structured_content["message"]), tool
 
 
 # SEC-03: least privilege. Read-only, closed-world, no egress, no files, no processes, no mutation.
+SAMPLE_CALLS = [
+    ("list_tanks", {"site": "Site B"}),
+    ("get_tank_status", {"tank_id": "TK-105"}),
+    ("get_inspection_history", {"tank_id": "TK-105"}),
+    ("get_tank_readings", {"tank_id": "TK-105", "days": 3}),
+]
+
+
 async def test_sec03_read_only_no_side_effects():
     async with Client(srv.mcp) as client:
-        tool = (await client.list_tools()).tools[0]
-        first = await client.call_tool("get_tank_status", {"tank_id": "TK-102"})
-        second = await client.call_tool("get_tank_status", {"tank_id": "TK-102"})
-
-    ann = tool.annotations
-    assert (ann.read_only_hint, ann.destructive_hint, ann.idempotent_hint, ann.open_world_hint) == (
-        True,
-        False,
-        True,
-        False,
-    )
-    declaration = first.meta[srv.SECURITY_META_KEY]
-    assert declaration == tool.meta[srv.SECURITY_META_KEY] == srv.SECURITY_DECLARATION
-    assert declaration["read_only"] is True and declaration["network_egress"] is False
-    assert first.structured_content == second.structured_content
+        tools = {t.name: t for t in (await client.list_tools()).tools}
+        for name, arguments in SAMPLE_CALLS:
+            first = await client.call_tool(name, arguments)
+            second = await client.call_tool(name, arguments)
+            ann = tools[name].annotations
+            assert (ann.read_only_hint, ann.destructive_hint, ann.idempotent_hint, ann.open_world_hint) == (
+                True,
+                False,
+                True,
+                False,
+            ), name
+            declaration = first.meta[srv.SECURITY_META_KEY]
+            assert declaration == tools[name].meta[srv.SECURITY_META_KEY] == srv.SECURITY_DECLARATION
+            assert first.structured_content == second.structured_content, name
+    assert srv.SECURITY_DECLARATION["read_only"] is True and srv.SECURITY_DECLARATION["network_egress"] is False
 
     events: list[str] = []
     recording = {"on": False}
@@ -166,15 +199,21 @@ async def test_sec03_read_only_no_side_effects():
             events.append(event)
 
     sys.addaudithook(hook)  # process-wide and permanent; gated by `recording`
-    before = copy.deepcopy(bl._TANKS)
+    datasets = (tank_data.TANKS, tank_data.INSPECTIONS, tank_data.READINGS, tank_data.READING_DATES)
+    before = copy.deepcopy(datasets)
     recording["on"] = True
     try:
-        for tank_id in ["TK-101", "TK-102", "TK-103", "TK-999", *ADVERSARIAL_INPUTS]:
-            srv.get_tank_status(tank_id)
+        for value in ["TK-101", "TK-105", "TK-107", "TK-999", *ADVERSARIAL_INPUTS]:
+            srv.get_tank_status(value)
+            srv.get_inspection_history(value)
+            srv.get_tank_readings(value)
+            srv.get_tank_readings(value, 3)
+            srv.list_tanks(value)
+        srv.list_tanks()
     finally:
         recording["on"] = False
     assert events == [], f"tool touched the outside world: {sorted(set(events))}"
-    assert bl._TANKS == before, "tool mutated its data"
+    assert datasets == before, "tool mutated its data"
 
 
 # SEC-04: transport. DNS rebinding, cross-origin calls and oversized bodies are refused.

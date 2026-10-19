@@ -24,8 +24,8 @@ The asset is the calling agent's context and its other tools. One poisoned resul
 
 | ID | Threat | What is checked | Pass condition |
 |---|---|---|---|
-| **SEC-01** | Tool poisoning, rug pull | `tools/list` returns exactly one tool. Name, description, schemas, annotations and server instructions contain no injection markers (override phrases, `<IMPORTANT>` tags, URLs, shell verbs, credential words) and no hidden or non-ASCII characters. The SHA-256 of the definition as sent matches the pinned hash | All clean, hash equals `security/tool_manifest.sha256` |
-| **SEC-02** | Indirect prompt injection through output | Adversarial inputs, 12 white-box and 8 black-box (instruction override, newline role switch, SQL, script tag, template, path traversal, Unicode digits, RTL override, zero-width space, URL exfil, NUL byte, 100 KB string) | `INVALID_INPUT`, `tank_id: null`, fixed message, no input text reflected, printable ASCII only, text content equal to structured content |
+| **SEC-01** | Tool poisoning, rug pull | `tools/list` returns exactly the four expected tools. Name, description, schemas, annotations and server instructions contain no injection markers (override phrases, `<IMPORTANT>` tags, URLs, shell verbs, credential words) and no hidden or non-ASCII characters. The SHA-256 of the definition as sent matches the pinned hash | All clean, hash equals `security/tool_manifest.sha256` |
+| **SEC-02** | Indirect prompt injection through output | Every text argument of every tool (`tank_id` on three tools, `site` on `list_tanks`) gets adversarial inputs, 12 white-box and 8 black-box (instruction override, newline role switch, SQL, script tag, template, path traversal, Unicode digits, RTL override, zero-width space, URL exfil, NUL byte, 100 KB string). Wrong-type arguments carrying instruction text, and an unknown tool name | `INVALID_INPUT`, `tank_id: null`, fixed message, no input text reflected, printable ASCII only, text content equal to structured content. Validation errors and the unknown-tool error contain no caller text |
 | **SEC-03** | Excessive agency, hidden side effects | Annotations are read-only, non-destructive, idempotent, closed-world. The declaration is identical at discovery and on every call. Repeat calls are identical. A Python audit hook during calls sees no `open`, `socket.*`, `subprocess.*`, `os.*` writes or `urllib.*`. The data is unchanged | Zero forbidden audit events, data unchanged |
 | **SEC-04** | DNS rebinding, cross-origin calls, resource abuse | Foreign Host header, foreign Origin, 5 MB body. Hosted URL is HTTPS | Refused (421, 403, 413 or reset with the server still healthy). HTTPS when not on loopback |
 | **SEC-05** | Information leakage, credential handling | A forced internal exception carries a fake secret and path. Malformed JSON-RPC. Wrong argument type. A credential canary is sent in `Authorization` and `X-Api-Key` | No secret, path, traceback or exception type reaches the agent. A wrong-type argument is refused, not run. The canary never appears in any log |
@@ -34,12 +34,12 @@ The asset is the calling agent's context and its other tools. One poisoned resul
 
 | Harness | Who runs it | Covers | Why |
 |---|---|---|---|
-| `tests/test_security.py` (white-box, 17 tests) | Developer and CI, on every change | SEC-01..05 in full, including the audit hook and forced exception | Proves the controls are in the code |
-| `python -m tools.security_check --url <deployed>/mcp` (black-box, 21 checks) | **Independent tester**: someone who did not write the code | SEC-01..05 over the network against the real deployment. The SEC-03 egress check is limited to declarations, so egress must also be shown by the container network policy | Proves what the agent actually sees, through the real ingress and gateway |
+| `tests/test_security.py` (white-box, 57 tests) | Developer and CI, on every change | SEC-01..05 in full, including the audit hook and forced exception | Proves the controls are in the code |
+| `python -m tools.security_check --url <deployed>/mcp` (black-box, 21 checks across all four tools) | **Independent tester**: someone who did not write the code | SEC-01..05 over the network against the real deployment. The SEC-03 egress check is limited to declarations, so egress must also be shown by the container network policy | Proves what the agent actually sees, through the real ingress and gateway |
 
 Independence matters here. A developer running their own checks on their own laptop proves less than a second person running the black-box script against the URL the agent uses.
 
-**The tests themselves were checked.** Three deliberate breaks were introduced: echoing input back, a poisoned description, and network egress with open-world set. The suite caught all three (12, 1 and 6 failures), then passed again after the code was restored.
+**The tests themselves were checked.** Three deliberate breaks were introduced: echoing input back, a poisoned description, and network egress with open-world set. The suite caught all three (12, 1 and 6 failures), then passed again after the code was restored. A fourth check, after the tool set grew to four, switched the server back to the plain SDK class: the four new reflection tests failed, and they passed again once the fix was restored.
 
 ## Cadence
 

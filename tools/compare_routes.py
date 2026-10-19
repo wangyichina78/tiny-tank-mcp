@@ -8,24 +8,25 @@ Exit 0 on parity, 1 on any difference.
 import json
 import sys
 
-COMPARED_FIELDS = ("tank_id", "status", "site", "result_code", "message", "source")
+def _key(call: dict) -> str:
+    return f"{call.get('tool', 'get_tank_status')} {json.dumps(call['input'], sort_keys=True)}"
 
 
 def compare(direct: dict, gateway: dict) -> list[str]:
     diffs = []
-    d_calls = {c["input"]: c for c in direct["calls"]}
-    g_calls = {c["input"]: c for c in gateway["calls"]}
-    for tank_id in sorted(d_calls.keys() | g_calls.keys()):
-        if tank_id not in d_calls or tank_id not in g_calls:
-            diffs.append(f"{tank_id!r}: present on one route only")
+    d_calls = {_key(c): c for c in direct["calls"]}
+    g_calls = {_key(c): c for c in gateway["calls"]}
+    for key in sorted(d_calls.keys() | g_calls.keys()):
+        if key not in d_calls or key not in g_calls:
+            diffs.append(f"{key}: present on one route only")
             continue
-        d, g = d_calls[tank_id], g_calls[tank_id]
+        d, g = d_calls[key], g_calls[key]
         if d["is_error"] != g["is_error"]:
-            diffs.append(f"{tank_id!r}: is_error {d['is_error']} vs {g['is_error']}")
+            diffs.append(f"{key}: is_error {d['is_error']} vs {g['is_error']}")
         dr, gr = d["result"] or {}, g["result"] or {}
-        for field in COMPARED_FIELDS:
+        for field in sorted(dr.keys() | gr.keys()):
             if dr.get(field) != gr.get(field):
-                diffs.append(f"{tank_id!r}.{field}: {dr.get(field)!r} vs {gr.get(field)!r}")
+                diffs.append(f"{key}.{field}: {dr.get(field)!r} vs {gr.get(field)!r}")
     return diffs
 
 

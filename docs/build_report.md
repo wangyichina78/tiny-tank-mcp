@@ -33,6 +33,14 @@ Endpoint: `/mcp` (Streamable HTTP, stateless, JSON responses). Local: `http://12
 | # | Item | Owner |
 |---|---|---|
 | 1 | Build and run the Docker image on a host with a daemon | Developer |
-| 2 | Host on a public HTTPS endpoint and run `tools/security_check.py` against it | Developer, then an independent tester |
+| 2 | Done for the dry run: hosted on Render, smoke test and security check pass against it. Repeat with an independent tester on the company host | Developer, then an independent tester |
 | 3 | Before connecting any organization's agent: get approval from that organization's security reviewer for calling a no-auth external endpoint | Whoever connects that agent |
 | 4 | If routed through an MCP gateway: log its request-ID header next to `call_id` | Gateway owner |
+
+## 4. Addendum: four tools (2026-10-19)
+
+- **Tool set:** `list_tanks`, `get_inspection_history` and `get_tank_readings` added next to `get_tank_status`, over an 8-tank synthetic snapshot (`as_of` 2026-10-16). The tools return facts only; `get_tank_status` is unchanged.
+- **Planted inconsistencies** for agents to find: TK-105 is in service with an overdue inspection and its level is above the high alarm; TK-107 is out of service but its level is rising.
+- **Security finding, fixed:** the SDK's argument-validation error repeats the rejected value (`input_value=...`), and an unknown tool name is echoed back. Either one puts caller text in front of the agent. This affected the original `get_tank_status` too: it was confirmed on the deployed Render server before the fix. `TinyTankServer.call_tool` now rewrites both, naming only the field and what it expected. The SDK's own server log already records field names only.
+- **SEC-01 pin:** now covers all four definitions, sorted by name. The hash is identical on Python 3.12 and 3.13.
+- **Results:** 79/79 tests pass on Python 3.12 and 3.13. The smoke test passes 17/17 and the black-box security check passes 21/21 against a live local server. Switching back to the plain SDK class makes exactly the four new reflection tests fail.

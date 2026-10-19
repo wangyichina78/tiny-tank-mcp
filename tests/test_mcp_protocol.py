@@ -26,14 +26,40 @@ async def _call(tank_id):
     return result.structured_content
 
 
-async def test_it01_discovery_one_tool_one_string_input():
+EXPECTED_INPUTS = {
+    "list_tanks": ({"site"}, []),
+    "get_tank_status": ({"tank_id"}, ["tank_id"]),
+    "get_inspection_history": ({"tank_id"}, ["tank_id"]),
+    "get_tank_readings": ({"tank_id", "days"}, ["tank_id"]),
+}
+
+
+async def test_it01_discovery_four_tools_with_expected_inputs():
     async with Client(server) as client:
         tools = (await client.list_tools()).tools
-    assert [t.name for t in tools] == ["get_tank_status"]
-    schema = tools[0].input_schema
-    assert list(schema["properties"]) == ["tank_id"]
-    assert schema["properties"]["tank_id"]["type"] == "string"
-    assert schema["required"] == ["tank_id"]
+    assert sorted(t.name for t in tools) == sorted(EXPECTED_INPUTS)
+    for tool in tools:
+        props, required = EXPECTED_INPUTS[tool.name]
+        assert set(tool.input_schema["properties"]) == props
+        assert tool.input_schema.get("required", []) == required
+        assert tool.output_schema is not None
+    status = next(t for t in tools if t.name == "get_tank_status")
+    assert status.input_schema["properties"]["tank_id"]["type"] == "string"
+
+
+async def _call_tool(name, arguments):
+    async with Client(server) as client:
+        result = await client.call_tool(name, arguments)
+    assert not result.is_error
+    return result.structured_content
+
+
+async def test_new_tools_round_trip_over_mcp():
+    assert (await _call_tool("list_tanks", {"site": "Site B"}))["count"] == 4
+    history = await _call_tool("get_inspection_history", {"tank_id": "TK-105"})
+    assert history["next_due"] == "2026-09-30" and history["as_of"] == "2026-10-16"
+    readings = await _call_tool("get_tank_readings", {"tank_id": "TK-105", "days": 3})
+    assert [r["level_pct"] for r in readings["readings"]] == [92.9, 93.7, 94.6]
 
 
 @pytest.mark.parametrize(
