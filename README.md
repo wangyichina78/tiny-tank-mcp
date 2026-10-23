@@ -40,6 +40,7 @@ MCP_Guide.md              how MCP works and how to build a server, step by step
 MCP_Publish.md            how to host it: container, config, TLS, pipeline, gateway, agents
 MCP_Security.md           security rules, the SEC-01..05 tests, evidence and limits
 DISCLAIMER.md             reference-only terms: review before use, no warranty
+dist/                     the handover package as one zip (PDFs + code), a snapshot of the version in its name
 src/tank_data.py          the synthetic snapshot (8 tanks, inspections, 7 days of readings)
 src/business_logic.py     validation and lookups (no MCP dependency)
 src/server.py             MCP wrapper, run options, one JSON log line per call
