@@ -1,5 +1,7 @@
 # Tiny Tank MCP
 
+> **Reference material only.** This is not production software. Review and vet it fully before using any part of it, and don't adopt it into a work environment as it is. Whoever uses it takes full responsibility for that use. See [DISCLAIMER.md](DISCLAIMER.md).
+
 A small, read-only MCP server for testing how an agent (Claude, Copilot Studio, or any MCP client) combines tools. It serves four tools over Streamable HTTP at `/mcp` (stateless, JSON responses) on a synthetic dataset of 8 tanks at two sites.
 
 There are no write operations, no connections to any other system, no auth, and no secrets.
@@ -37,6 +39,7 @@ Ask questions like these and watch which tools the agent calls:
 MCP_Guide.md              how MCP works and how to build a server, step by step
 MCP_Publish.md            how to host it: container, config, TLS, pipeline, gateway, agents
 MCP_Security.md           security rules, the SEC-01..05 tests, evidence and limits
+DISCLAIMER.md             reference-only terms: review before use, no warranty
 src/tank_data.py          the synthetic snapshot (8 tanks, inspections, 7 days of readings)
 src/business_logic.py     validation and lookups (no MCP dependency)
 src/server.py             MCP wrapper, run options, one JSON log line per call
@@ -97,6 +100,6 @@ claude mcp add --transport http tiny-tank https://<host>/mcp
 
 For Copilot Studio, add an MCP tool with the Streamable HTTP transport and no authentication. If the agent belongs to an organization, get that organization's approval before connecting it to an external endpoint.
 
-## License
+## Disclaimer
 
-MIT
+Reference material, shared for learning. No licence is granted, and there is no warranty or support. Anyone who uses any part of it takes full responsibility for that use. The full terms are in [DISCLAIMER.md](DISCLAIMER.md).

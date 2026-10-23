@@ -8,6 +8,8 @@ Kept off the page: company names, the author's personal Render account and URL.
 
 # MCP Publish: Hosting an MCP Server
 
+> **Reference material only.** This is not production software. Review and vet it fully before using any part of it, and don't adopt it into a work environment as it is. Whoever uses it takes full responsibility for that use. See [DISCLAIMER.md](DISCLAIMER.md).
+
 `MCP_Guide.md` ends with a server running on `127.0.0.1`. This document covers everything between that and a company agent calling it over HTTPS: packaging, configuration, hosting, TLS, the deploy pipeline, verification, the gateway, connecting agents, and day-two operations.
 
 Render, a hosted container platform, is used as the worked example because the full path was actually run on it. The company platform will differ, so each step says what the equivalent usually is on an enterprise platform. Those mappings are typical patterns. Confirm what your platform actually runs with the platform owners.

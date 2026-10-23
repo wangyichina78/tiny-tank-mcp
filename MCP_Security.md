@@ -8,6 +8,8 @@ Kept off the page: company names, real sites, how the dry-run repository was adm
 
 # MCP Security: Rules, Tests and Evidence
 
+> **Reference material only.** This is not production software. Review and vet it fully before using any part of it, and don't adopt it into a work environment as it is. Whoever uses it takes full responsibility for that use. See [DISCLAIMER.md](DISCLAIMER.md).
+
 This document is for the team that has to approve an MCP server. It assumes no prior knowledge of MCP and no goodwill toward it. It covers what MCP is in security terms, which risks are actually new, the rules a server must follow, the five security test cases with their pass criteria, the evidence produced, what the tests can't prove, and a checklist for approving future MCP servers.
 
 Everything here was applied to the Tiny Tank reference server in this package. Where a claim rests on a test, the test is named. Labels used: **Confirmed** means demonstrated in this package's tests or live runs. **Inferred** means reasoned from documentation or behaviour but not directly tested here. **Judgment** means the author's recommendation.

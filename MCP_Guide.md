@@ -8,6 +8,8 @@ Kept off the page: company names, real sites, the author's personal hosting acco
 
 # MCP Guide: How MCP Works and How to Build a Server
 
+> **Reference material only.** This is not production software. Review and vet it fully before using any part of it, and don't adopt it into a work environment as it is. Whoever uses it takes full responsibility for that use. See [DISCLAIMER.md](DISCLAIMER.md).
+
 This guide guides a Python developer to build a working, tested MCP server. Every command and every output shown here was run against the MCP Python SDK 2.3.0 on Python 3.12 and 3.13. The reference implementation is the Tiny Tank server in this package (`src/`). Publishing is covered in `MCP_Publish.md`, and the security rules in `MCP_Security.md`.
 
 ## 1. The mental model
