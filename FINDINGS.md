@@ -19,7 +19,7 @@ Every defect, risk and process gap found in Tiny Tank MCP. Format, severity and 
 | F7 | Browser-based clients rejected until their origin is allowlisted | Information | Closed | Release verification |
 | F8 | No secret scan in CI | Medium | **Open** | None yet |
 | F9 | No named owner, reviewer or security approver | Medium | **Open** | None (process) |
-| F10 | PR #1 and PR #2 merged without independent review | Low | **Open** | None (process) |
+| F10 | PRs merged without independent review (#1 onward) | Low | **Open**: self-merge directed by the owner | None (process) |
 
 ## Entries
 
@@ -99,10 +99,11 @@ Every defect, risk and process gap found in Tiny Tank MCP. Format, severity and 
 - **Owner:** unassigned · **Due:** set when an owner is named
 - **Status:** Open
 
-### F10 — PR #1 and PR #2 merged without independent review
-- **Found:** 2026-11-13 · **Version:** d2b7a94, 3a0b554
+### F10 — PRs merged without independent review
+- **Found:** 2026-11-13 · **Version:** d2b7a94 onward (PR #1, #2, #3)
 - **Severity:** Low · **Type:** Process
-- **Description:** Both PRs were merged by their author without a reviewer. This breaches QA-02 R2. Both are docs only. PR #2 changed who approves a security re-pin, so it changed a process control.
-- **Fix:** the security approver reviews PR #2 after the fact and records the outcome here.
+- **Description:** PRs are merged by their author without a reviewer. This breaches QA-02 R2. So far all are docs only. PR #2 changed who approves a security re-pin, so it changed a process control.
+- **Decision:** on 2026-11-13 the owner directed that QA/QC kit updates be merged without asking first. That is a risk acceptance in practice, but under QA-04 R3 it needs a named approver and an expiry date before it counts as one.
+- **Fix:** once a security approver is named (F9), either record this as an accepted risk with an expiry date, or review the merged PRs after the fact (PR #2 first) and require review from then on.
 - **Owner:** unassigned · **Due:** set when an owner is named
 - **Status:** Open

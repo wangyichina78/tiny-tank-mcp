@@ -40,6 +40,8 @@ MCP_Guide.md              how MCP works and how to build a server, step by step
 MCP_Publish.md            how to host it: container, config, TLS, pipeline, gateway, agents
 MCP_Security.md           security rules, the SEC-01..05 tests, evidence and limits
 DISCLAIMER.md             reference-only terms: review before use, no warranty
+CHANGELOG.md              what changed per version (QA-01)
+FINDINGS.md               every defect, risk and process gap, and its status (QA-04)
 dist/                     the handover package as one zip (PDFs + code), a snapshot; its name gives the build date, time (UTC-5) and version
 src/tank_data.py          the synthetic snapshot (8 tanks, inspections, 7 days of readings)
 src/business_logic.py     validation and lookups (no MCP dependency)
@@ -50,7 +52,8 @@ tools/compare_routes.py   direct vs gateway evidence parity check (GT-05)
 tools/security_check.py   black-box SEC-01..05 against a live endpoint
 security/tool_manifest.sha256  pinned hash of the tool definitions (SEC-01)
 SECURITY.md               security declaration
-docs/security_test_cadence.md  the five security cases and when to run them
+docs/security_test_cadence.md  the five security cases, and how this project runs the QA-00 security cadence
+docs/quality/             QA/QC kit: QA-00 overview and master test cadence, QA-01..04, QC-01..04
 docs/deployment.md        hosting and connecting an agent
 docs/build_report.md      verification results
 .github/workflows/ci.yml  tests + live black-box security check on every push

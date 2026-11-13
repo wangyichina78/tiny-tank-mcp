@@ -10,17 +10,18 @@ Entries before 2026-11-13 were **backfilled on 2026-11-13** from commit history,
 
 ### Added
 - QA/QC kit in `docs/quality/` (QA-00 to QA-04, QC-01 to QC-04). PR #1.
-- `CHANGELOG.md` (this file) and `FINDINGS.md`, as the kit requires on day one.
+- `CHANGELOG.md` (this file) and `FINDINGS.md`, as the kit requires on day one. PR #3.
 
 ### Changed
 - `docs/security_test_cadence.md` now maps each of its rows to the master cadence in QA-00 instead of keeping its own schedule. QA-00 and QC-02 gained two triggers: a published definition change, and a gateway or route change. PR #2.
 - Re-pinning the tool-definition hash now needs the **security approver**, not any independent reviewer (QA-02). PR #2.
 - The monthly black-box check now covers every live route, not only the direct endpoint. PR #2.
+- The README layout lists the quality documents. PR #3.
 
 ### Security
 - See Changed above: re-pin approval moved to the security approver.
 
-Approved by: none. PR #1 and PR #2 were merged by their author without independent review (finding F10).
+Approved by: none. PRs #1 to #3 were merged by their author without independent review, at the owner's direction (finding F10).
 
 ## [2026-10-23_09f33bf] — 2026-10-23
 
