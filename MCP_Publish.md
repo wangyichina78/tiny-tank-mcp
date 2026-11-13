@@ -108,7 +108,8 @@ services:
     name: tiny-tank-mcp
     runtime: docker
     plan: free
-    autoDeploy: true
+    branch: main
+    autoDeployTrigger: checksPass
     envVars:
       - key: MCP_ALLOWED_HOSTS
         sync: false
@@ -134,7 +135,7 @@ What Render did that an enterprise platform does differently:
 | Managed HTTPS and the certificate automatically | Ingress controller or load balancer with a company certificate |
 | Put Cloudflare in front, including a WAF | The company WAF or edge service |
 | Stored env vars in its dashboard | Platform config, plus a secret store (such as Key Vault) for anything sensitive |
-| Deployed on every push to `main` | Deploy after CI passes, with an approval step for production |
+| Deployed every push to `main` after its CI checks passed (`checksPass`; before 2026-11-13 it deployed in parallel with CI, F5) | Deploy as a later stage of the same pipeline, with an approval step for production |
 | Slept the free service when idle | Keep at least one instance always running |
 | Logs in its dashboard | Central logging (the server writes JSON lines to stderr) |
 
@@ -153,11 +154,12 @@ For a Microsoft-centred company the usual candidates are Azure Container Apps, A
 
 `.github/workflows/ci.yml` runs on every push and pull request, on Python 3.12 and 3.13:
 
-1. Install the requirements.
-2. Run all tests: functional, protocol and security (79 tests).
-3. Start the server and run the live smoke test and the black-box security check against it.
+1. Scan every tracked file for secrets with `detect-secrets` (a separate job). The only allowed hit is the deliberate SEC-05 fake, marked `pragma: allowlist secret`.
+2. Install the requirements.
+3. Run all tests: functional, protocol and security (79 tests).
+4. Start the server and run the live smoke test and the black-box security check against it.
 
-**The gap found in the dry run:** Render's auto-deploy and CI both start on the same push and run independently, so a commit that fails CI is deployed anyway. On an enterprise pipeline, make the deploy a later stage of the same pipeline:
+**The gap found in the dry run:** Render's auto-deploy and CI both start on the same push and run independently, so a commit that fails CI is deployed anyway. The fix on Render is `autoDeployTrigger: checksPass` in `render.yaml` (replacing `autoDeploy: true`): Render waits until every CI check on the commit passes, and doesn't deploy if any check fails or none ran. On an enterprise pipeline, make the deploy a later stage of the same pipeline:
 
 ```
 push → CI (tests + live checks) → build image, tag with SHA → deploy to test → smoke + security check
@@ -169,7 +171,7 @@ Rules worth enforcing in the pipeline itself, where they can't be skipped:
 - **No deploy unless CI on that exact commit is green.**
 - **Images are tagged with the commit SHA, never `latest`,** so every piece of evidence points to one build.
 - **Production needs a person's approval.**
-- **A changed tool definition stops the pipeline.** The security test SEC-01 compares the live tool definitions with a pinned hash, and a reviewer must approve the new hash before it ships. See `MCP_Security.md`.
+- **A changed tool definition stops the pipeline.** The security test SEC-01 compares the live tool definitions with a pinned hash, and the security approver must approve the new hash before it ships (QA-02). See `MCP_Security.md`.
 
 ## 8. Verify every deployment
 

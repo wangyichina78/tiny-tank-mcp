@@ -14,10 +14,10 @@ Every defect, risk and process gap found in Tiny Tank MCP. Format, severity and 
 | F2 | ID validation accepted non-ASCII digits | Low | Closed | SEC-02 (non-ASCII digit input) |
 | F3 | SDK validation errors echo caller input | Medium | Closed | SEC-02 wrong-type and unknown-tool |
 | F4 | Tool descriptions differed between Python 3.12 and 3.13 | Low | Closed | SEC-01, CI on both versions |
-| F5 | Render deploys in parallel with CI | Medium | **Open** | None yet |
+| F5 | Render deploys in parallel with CI | Medium | Fixed: awaiting live verification | Render deploy log (pending) |
 | F6 | WAF blocks attack strings on one route only | Information | Open: parity exception not yet agreed | Route parity check |
 | F7 | Browser-based clients rejected until their origin is allowlisted | Information | Closed | Release verification |
-| F8 | No secret scan in CI | Medium | **Open** | None yet |
+| F8 | No secret scan in CI | Medium | Fixed: awaiting first CI run on `main` | CI job `secret-scan` |
 | F9 | No named owner, reviewer or security approver | Medium | **Open** | None (process) |
 | F10 | PRs merged without independent review (#1 onward) | Low | **Open**: self-merge directed by the owner | None (process) |
 
@@ -64,9 +64,11 @@ Every defect, risk and process gap found in Tiny Tank MCP. Format, severity and 
 - **Severity:** Medium · **Type:** Process
 - **Source:** `MCP_Publish.md` sections 7 and 12
 - **Description:** Render's auto-deploy and CI both start on the same push and run independently, so a commit that fails CI is deployed anyway. It caused no harm in the dry run. `render.yaml` still has `autoDeploy: true` as of 2026-11-13.
-- **Fix:** make deploy a pipeline stage after CI passes, or turn off `autoDeploy` and deploy by hook from CI.
+- **Fix:** `render.yaml` now sets `autoDeployTrigger: checksPass` and `branch: main`, replacing `autoDeploy: true`. Render waits until every CI check on the commit passes, including the new `secret-scan` job (F8), and doesn't deploy if any check fails or none ran. PR #5. On an enterprise pipeline the deploy should still be a later stage of the same pipeline (`MCP_Publish.md` section 7).
+- **Regression test added:** none possible in this repository. The control sits in Render's configuration.
+- **Verified:** not yet. To close: (1) in the Render dashboard, confirm the service shows "After CI Checks Pass". If the service wasn't created from the Blueprint, the setting must be changed there by hand. (2) Confirm the deploy log for the PR #5 merge commit starts after CI finished.
 - **Owner:** unassigned · **Due:** set when an owner is named
-- **Status:** Open
+- **Status:** Fixed, awaiting verification (2026-11-13)
 
 ### F6 — WAF blocks attack strings on one route only
 - **Found:** 2026-10-17 on Render (Cloudflare) · **Version:** 724c18b
@@ -87,9 +89,11 @@ Every defect, risk and process gap found in Tiny Tank MCP. Format, severity and 
 - **Found:** 2026-11-13 while reconciling the security cadence with QA-00 · **Version:** 3a0b554
 - **Severity:** Medium · **Type:** Security / process
 - **Description:** QC-02 R5 requires a secret scan on every commit. `.github/workflows/ci.yml` has none. The deliberate fake secrets used by SEC-05 will need to be recorded as accepted findings once a scanner runs.
-- **Fix:** add a scanner (for example `detect-secrets`, or GitHub secret scanning) to CI.
+- **Fix:** new CI job `secret-scan` runs `detect-secrets` 1.5.0 over every tracked file (except `dist/`) on every push and pull request, against `.secrets.baseline`. The only hit, the deliberate SEC-05 fake at `tests/test_security.py:257`, is marked `pragma: allowlist secret`, so the baseline is empty and any new secret fails the job. PR #5.
+- **Regression test added:** the `secret-scan` CI job
+- **Verified locally:** the clean repository passes (exit 0); a planted GitHub-style token in `src/` fails (exit 1); 79/79 tests still pass. Close once the job passes on `main` in GitHub Actions.
 - **Owner:** unassigned · **Due:** set when an owner is named
-- **Status:** Open
+- **Status:** Fixed, awaiting first CI run on `main` (2026-11-13)
 
 ### F9 — No named owner, reviewer or security approver
 - **Found:** 2026-11-13 while adopting the QA/QC kit · **Version:** 3a0b554
@@ -100,11 +104,11 @@ Every defect, risk and process gap found in Tiny Tank MCP. Format, severity and 
 - **Status:** Open
 
 ### F10 — PRs merged without independent review
-- **Found:** 2026-11-13 · **Version:** d2b7a94 onward (PR #1, #2, #3, #4)
+- **Found:** 2026-11-13 · **Version:** d2b7a94 onward (PR #1 to #5)
 - **Severity:** Low · **Type:** Process
 - **Description:** PRs are merged by their author without a reviewer. This breaches QA-02 R2. So far all are docs only. PR #2 changed who approves a security re-pin, so it changed a process control.
 - **Decision:** on 2026-11-13 the owner directed that QA/QC kit updates be merged without asking first. That is a risk acceptance in practice, but under QA-04 R3 it needs a named approver and an expiry date before it counts as one.
-- **Standing practice:** `CLAUDE.md` tells Claude Code sessions to merge quality-document changes without asking and add each PR here. Code and config changes still need the owner's go-ahead.
+- **Standing practice:** `CLAUDE.md` tells Claude Code sessions to merge quality-document changes without asking and add each PR here. On 2026-11-13 the owner extended this to the F5 and F8 code and config fixes (PR #5). Other code and config changes still need the owner's go-ahead.
 - **Fix:** once a security approver is named (F9), either record this as an accepted risk with an expiry date, or review the merged PRs after the fact (PR #2 first) and require review from then on.
 - **Owner:** unassigned · **Due:** set when an owner is named
 - **Status:** Open

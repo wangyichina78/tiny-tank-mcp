@@ -8,6 +8,19 @@ permissions:
   contents: read
 
 jobs:
+  secret-scan:
+    # QC-02 R5: scan every commit for secrets (finding F8). The only allowed hit is the
+    # deliberate SEC-05 fake in tests/test_security.py, marked "pragma: allowlist secret".
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install detect-secrets==1.5.0
+      - name: Fail on any secret not in .secrets.baseline
+        run: git ls-files -z | xargs -0 detect-secrets-hook --baseline .secrets.baseline --exclude-files '^dist/'
+
   test:
     runs-on: ubuntu-latest
     strategy:

@@ -57,7 +57,8 @@ docs/security_test_cadence.md  the five security cases, and how this project run
 docs/quality/             QA/QC kit: QA-00 overview and master test cadence, QA-01..04, QC-01..04
 docs/deployment.md        hosting and connecting an agent
 docs/build_report.md      verification results
-.github/workflows/ci.yml  tests + live black-box security check on every push
+.github/workflows/ci.yml  secret scan, tests and live black-box security check on every push; Render deploys only after it passes
+.secrets.baseline         detect-secrets baseline for the CI secret scan (empty: no allowed secrets)
 ```
 
 ## Run locally

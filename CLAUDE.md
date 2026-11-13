@@ -19,7 +19,7 @@ For changes to the QA/QC kit and the quality records (`docs/quality/`, `CHANGELO
 3. Each self-merge breaches QA-02 R2 (no independent review). Add the PR number to finding F10 in `FINDINGS.md`. Don't treat F10 as closed or as an accepted risk until a named security approver records it with an expiry date.
 4. After merging, sync the working branch to `main` and push it.
 
-**This does not cover code, CI or deployment config** (`src/`, `tests/`, `tools/`, `.github/`, `render.yaml`, `Dockerfile`, `security/`). For those, ask before merging. Open findings F5 and F8 fall in this group.
+**This does not cover code, CI or deployment config** (`src/`, `tests/`, `tools/`, `.github/`, `render.yaml`, `Dockerfile`, `security/`). For those, ask before merging. The one exception so far: the owner approved the F5 and F8 fixes (PR #5) on 2026-11-13.
 
 ## Records
 

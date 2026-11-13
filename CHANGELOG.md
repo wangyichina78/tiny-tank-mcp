@@ -19,10 +19,15 @@ Entries before 2026-11-13 were **backfilled on 2026-11-13** from commit history,
 - The README layout lists the quality documents. PR #3.
 - `CLAUDE.md` records how Claude Code sessions handle quality-document updates: merge without asking, consolidate the records, and log each self-merge in F10. PR #4.
 
+### Fixed
+- Render now deploys only after every CI check on the commit passes (`autoDeployTrigger: checksPass`), instead of deploying in parallel with CI (finding F5). PR #5.
+
 ### Security
 - See Changed above: re-pin approval moved to the security approver.
+- CI scans every tracked file for secrets with `detect-secrets` 1.5.0 on every push and pull request (finding F8, QC-02 R5). The deliberate SEC-05 fake is marked `pragma: allowlist secret`, and `.secrets.baseline` is empty. PR #5.
+- `MCP_Publish.md` and `MCP_Security.md` now name the security approver for re-pins, matching QA-02. PR #5.
 
-Approved by: none. PRs #1 to #4 were merged by their author without independent review, at the owner's direction (finding F10).
+Approved by: none. PRs #1 to #5 were merged by their author without independent review, at the owner's direction (finding F10).
 
 ## [2026-10-23_09f33bf] — 2026-10-23
 
