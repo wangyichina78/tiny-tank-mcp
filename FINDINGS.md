@@ -100,10 +100,11 @@ Every defect, risk and process gap found in Tiny Tank MCP. Format, severity and 
 - **Status:** Open
 
 ### F10 — PRs merged without independent review
-- **Found:** 2026-11-13 · **Version:** d2b7a94 onward (PR #1, #2, #3)
+- **Found:** 2026-11-13 · **Version:** d2b7a94 onward (PR #1, #2, #3, #4)
 - **Severity:** Low · **Type:** Process
 - **Description:** PRs are merged by their author without a reviewer. This breaches QA-02 R2. So far all are docs only. PR #2 changed who approves a security re-pin, so it changed a process control.
 - **Decision:** on 2026-11-13 the owner directed that QA/QC kit updates be merged without asking first. That is a risk acceptance in practice, but under QA-04 R3 it needs a named approver and an expiry date before it counts as one.
+- **Standing practice:** `CLAUDE.md` tells Claude Code sessions to merge quality-document changes without asking and add each PR here. Code and config changes still need the owner's go-ahead.
 - **Fix:** once a security approver is named (F9), either record this as an accepted risk with an expiry date, or review the merged PRs after the fact (PR #2 first) and require review from then on.
 - **Owner:** unassigned · **Due:** set when an owner is named
 - **Status:** Open
