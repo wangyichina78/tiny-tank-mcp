@@ -42,6 +42,7 @@ MCP_Security.md           security rules, the SEC-01..05 tests, evidence and lim
 DISCLAIMER.md             reference-only terms: review before use, no warranty
 CHANGELOG.md              what changed per version (QA-01)
 FINDINGS.md               every defect, risk and process gap, and its status (QA-04)
+CLAUDE.md                 instructions for Claude Code sessions in this repo
 dist/                     the handover package as one zip (PDFs + code), a snapshot; its name gives the build date, time (UTC-5) and version
 src/tank_data.py          the synthetic snapshot (8 tanks, inspections, 7 days of readings)
 src/business_logic.py     validation and lookups (no MCP dependency)

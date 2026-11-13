@@ -17,11 +17,12 @@ Entries before 2026-11-13 were **backfilled on 2026-11-13** from commit history,
 - Re-pinning the tool-definition hash now needs the **security approver**, not any independent reviewer (QA-02). PR #2.
 - The monthly black-box check now covers every live route, not only the direct endpoint. PR #2.
 - The README layout lists the quality documents. PR #3.
+- `CLAUDE.md` records how Claude Code sessions handle quality-document updates: merge without asking, consolidate the records, and log each self-merge in F10. PR #4.
 
 ### Security
 - See Changed above: re-pin approval moved to the security approver.
 
-Approved by: none. PRs #1 to #3 were merged by their author without independent review, at the owner's direction (finding F10).
+Approved by: none. PRs #1 to #4 were merged by their author without independent review, at the owner's direction (finding F10).
 
 ## [2026-10-23_09f33bf] — 2026-10-23
 
