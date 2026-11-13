@@ -100,7 +100,7 @@ Error executing tool get_tank_readings: invalid arguments (days: Input should be
 **R8. Tool definitions are reviewed, clean and pinned.**
 - **Explicit strings:** descriptions are plain strings, never derived from docstrings. Docstring handling differs between Python 3.12 and 3.13, which silently changed the published definitions (F4).
 - **Lint:** every description, schema string and the server instructions must be printable ASCII and free of injection markers: override phrases, `<IMPORTANT>`-style tags, URLs, shell commands, credential words.
-- **Pinned hash:** the SHA-256 of all definitions exactly as sent on the wire is pinned in `security/tool_manifest.sha256`. Any change fails SEC-01 until a named reviewer approves the new hash.
+- **Pinned hash:** the SHA-256 of all definitions exactly as sent on the wire is pinned in `security/tool_manifest.sha256`. Any change fails SEC-01 until the security approver, named, approves the new hash (QA-02).
 
 *Verified by SEC-01.*
 

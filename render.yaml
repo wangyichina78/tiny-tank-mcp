@@ -4,7 +4,10 @@ services:
     name: tiny-tank-mcp
     runtime: docker
     plan: free
-    autoDeploy: true
+    branch: main
+    # Deploy only after every CI check on the commit passes (finding F5).
+    # Replaces the deprecated autoDeploy: true, which deployed in parallel with CI.
+    autoDeployTrigger: checksPass
     envVars:
       # Render asks for these at setup (sync: false). Use the service's own hostname,
       # e.g. tiny-tank-mcp.onrender.com and https://tiny-tank-mcp.onrender.com

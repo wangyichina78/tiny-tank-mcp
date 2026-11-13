@@ -254,7 +254,7 @@ def test_sec04_transport_rejects_rebinding_cross_origin_and_oversize():
 
 # SEC-05: failure and log hygiene. Internals and credentials never reach the agent or the log.
 async def test_sec05_errors_and_logs_leak_nothing(monkeypatch, caplog):
-    secret = "hunter2-SECRET-7f3a"
+    secret = "hunter2-SECRET-7f3a"  # pragma: allowlist secret  (deliberate fake for SEC-05; F8)
 
     def boom(_):
         raise RuntimeError(f"db password={secret} at /srv/internal/tanks.py")
