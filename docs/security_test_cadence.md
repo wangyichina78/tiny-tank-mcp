@@ -43,14 +43,18 @@ Independence matters here. A developer running their own checks on their own lap
 
 ## Cadence
 
-| Trigger | Harness | Owner | Evidence kept |
+The master schedule is in [`docs/quality/QA-00_Overview.md`](quality/QA-00_Overview.md). This table only says how this project runs the security rows of that schedule. A new trigger goes into QA-00 first, then here.
+
+| QA-00 trigger | What runs here | Owner | Evidence kept (QA-03 name) |
 |---|---|---|---|
-| Every commit or PR | White-box | Developer (CI) | CI log |
-| Before each deployment | Black-box on the deployed URL, direct and gateway route | Independent tester (a security reviewer or a peer who did not write the code) | `evidence/security-<date>.json` |
-| `mcp` SDK version bump or base-image change | Both | Developer, then independent tester | Both |
-| Gateway route or policy change | Black-box on the gateway URL | Gateway owner and independent tester | Evidence file |
-| Monthly while the direct endpoint is live | Black-box | Independent tester | Evidence file |
-| Tool definition changed (SEC-01 hash fails) | Stop. Review the diff, re-pin with `--pin`, re-run both | Developer proposes, independent reviewer approves the pin | Pin commit with reviewer named |
+| Every commit or pull request | White-box | Developer (CI) | CI run log |
+| Before every release, after every deployment | Black-box on the deployed URL, direct and gateway route, before the agent is pointed at the new version | Independent tester (someone who did not write the change) | `security-blackbox_tiny-tank-mcp_<commit>_<YYYY-MM-DD>_<HHMM>_<route>.json` |
+| Dependency or platform upgrade (`mcp` SDK bump, base-image change) | Both | Developer, then independent tester | CI run log and evidence file |
+| Published interface or definition change (SEC-01 hash fails) | Stop. Review the diff, re-pin with `--pin`, re-run both | Developer proposes, **security approver** approves the pin (QA-02) | Pin commit naming the approver |
+| Gateway, proxy or route change | Black-box on the changed route, plus route parity with `tools/compare_routes.py` | Gateway owner and independent tester | Evidence file |
+| Monthly, while live | Black-box on every live route | Independent tester | Evidence file |
+
+Write the evidence file with `--out`, using the QA-03 name, and file it in the evidence store under `evidence/tiny-tank-mcp/<commit>/`, not in this repository.
 
 The re-pin is the control point. Whoever approves a new hash approves what the agent will read.
 

@@ -62,8 +62,11 @@ The black-box harness should need nothing but the address and a standard runtime
 | Before each release | Black-box check by an independent tester |
 | After each deployment | Black-box check against the deployed address (part of QC-04) |
 | Dependency, framework or platform upgrade | Both harnesses |
-| Monthly while live | Black-box check |
+| Monthly while live | Black-box check on every live route |
 | Interface or definition change | Both harnesses, plus re-approval of the contract pin (QA-02) |
+| Gateway, proxy or route change | Black-box check on the changed route, plus QC-04 route parity |
+
+This table is the security slice of the master cadence in QA-00. Change QA-00 first.
 
 ## 6. Report template
 

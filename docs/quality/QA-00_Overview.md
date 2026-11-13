@@ -57,11 +57,15 @@ This is the single schedule. The other documents give the detail for each row.
 | Every commit or pull request | QC-01 regression suite, and the automated part of QC-02 | CI (automated) | CI run log |
 | Before merging | Code review | Reviewer | Review approval in the pull request |
 | Before every release | Full QC-01 and QC-02. QC-03 if behaviour changed | Developer, independent tester, business user | Test reports, UAT sign-off |
-| After every deployment | QC-04 release verification | Independent tester | Verification report |
+| After every deployment | QC-04 release verification, including the QC-02 black-box check against the deployed address | Independent tester | Verification report, security report |
 | Dependency or platform upgrade | QC-01 and QC-02 in full | Developer, then independent tester | Test reports |
-| Monthly, while live | QC-02 independent security check | Independent tester | Security report |
+| Published interface or definition change (for example, a pinned contract hash no longer matches) | Stop the release. Review the change, re-approve the pin (QA-02), then QC-01 and QC-02 in full | Developer proposes, security approver approves the pin, independent tester re-runs | Pin commit naming the approver, test reports |
+| Gateway, proxy or network route change | QC-02 black-box check and QC-04 route parity on the changed route | Route owner, independent tester | Security report, verification report |
+| Monthly, while live | QC-02 independent black-box check on every live route | Independent tester | Security report |
 | Quarterly | Review open findings (QA-04) and this cadence | Owner and security approver | Review minutes |
 | Any incident | Root cause, a new regression test, a findings entry | Developer and owner | Findings entry, test added |
+
+A project may keep a more detailed cadence for one area, such as which harness runs against which URL. Each of its rows must map to a row here. A new trigger is added here first, then to the detailed cadence, so the two can't drift apart.
 
 ## Principles behind every document
 
